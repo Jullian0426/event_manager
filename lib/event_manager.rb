@@ -46,26 +46,36 @@ end
 
 def time_targeting(dates)
   hours = []
+  days_of_week = []
 
+  # Extract hours and days of the week from date strings
   dates.each do |date|
     date_time = DateTime.strptime(date, '%m/%d/%y %H:%M')
     hours << date_time.hour
+    days_of_week << date_time.strftime('%A')  # '%A' gives the full name of the day
   end
 
-  hour_counts = hours.each_with_object(Hash.new(0)) { |hour, counts| counts[hour] += 1 }
-
-  sorted_hour_counts = hour_counts.sort_by { |hour, count| -count }
-  top_three_hours = sorted_hour_counts.first(3).map(&:first)
+  # Find the top 3 most frequent hours and days
+  top_three_hours = find_top_frequencies(hours, 3)
+  top_three_days = find_top_frequencies(days_of_week, 3)
 
   puts "Most frequent hours: #{top_three_hours.inspect}"
+  puts "Most frequent days of the week: #{top_three_days.inspect}"
 
-  top_three_hours
+  [top_three_hours, top_three_days]  # Return the top three hours and days for further use
 end
+
+def find_top_frequencies(elements, top_n)
+  counts = elements.each_with_object(Hash.new(0)) { |element, counts| counts[element] += 1 }
+  sorted_counts = counts.sort_by { |element, count| -count }
+  sorted_counts.first(top_n).map(&:first)
+end
+
 
 puts 'EventManager initialized.'
 
 contents = CSV.open(
-  'event_attendees_full.csv',
+  'event_attendees.csv',
   headers: true,
   header_converters: :symbol
 )
@@ -82,11 +92,11 @@ contents.each do |row|
   date = row[:regdate]
   dates << date
   phone_number = clean_phone_number(row[:homephone])
-  # legislators = legislators_by_zipcode(zipcode)
+  legislators = legislators_by_zipcode(zipcode)
 
-  # form_letter = erb_template.result(binding)
+  form_letter = erb_template.result(binding)
 
-  # save_thank_you_letter(id,form_letter)
+  save_thank_you_letter(id,form_letter)
 end
 
 time_targeting(dates)
